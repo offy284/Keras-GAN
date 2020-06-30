@@ -13,6 +13,7 @@ from keras import losses
 from keras.utils import to_categorical
 import keras.backend as K
 import scipy
+import scipy.misc ## IMPORTANT
 
 import matplotlib.pyplot as plt
 
