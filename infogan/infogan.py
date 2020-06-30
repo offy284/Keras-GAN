@@ -10,6 +10,8 @@ from keras.optimizers import Adam
 from keras.utils import to_categorical
 import keras.backend as K
 
+import tensorflow as tf
+
 import matplotlib.pyplot as plt
 
 import numpy as np
