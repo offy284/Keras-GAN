@@ -25,16 +25,15 @@ import scipy
 from scipy.io.wavfile import write, read
 from os import listdir
 from os.path import isfile, join
+from tqdm import tqdm
+
+
 onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
 
+big_music = np.zeros((1, 2))
 
-big_music = np.zeros(1)
-
-i = 0
-for file in onlyfiles:
-    i += 1
-    if i % 10 == 0:
-        print(f"{i/len(onlyfiles) * 100}% complete")
+for _ in tqdm(range(len(onlyfiles))):
+    file = onlyfiles[1]
     if "-converted" in file:
         x = scipy.io.wavfile.read(f"MusicData/{file}")
         x = x[1]
