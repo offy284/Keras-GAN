@@ -28,7 +28,7 @@ from os.path import isfile, join
 onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
 
 
-big_music = np.zeros((1,2))
+big_music = np.zeros(1)
 
 i = 0
 for file in onlyfiles:
@@ -41,4 +41,7 @@ for file in onlyfiles:
         big_music = np.concatenate([big_music, x])
 
 
-test_out = scipy.io.wavfile.write("big_music.wav", 44100, big_music)
+#scipy.io.wavfile.write("big_music.wav", 22050, big_music)
+
+with open("big_music.dat", 'wb') as file:
+    file.write(big_music)
