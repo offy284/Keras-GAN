@@ -92,14 +92,16 @@ class GAN():
         return Model(img, validity)
 
     def load_data(self):
-        big_music = np.load("big_music.npy")
+        print("Loading big_music_imgs.npy...")
 
-        print(f"big_music is {big_music.shape[0]} samples large with {big_music.shape[1]} channels")
+        big_music_imgs = np.load("big_music_imgs.npy")
 
-        return big_music
+        print(f"big_music_imgs is of shape {big_music_imgs.shape}")
+
+        return big_music_imgs
 
     def train(self, epochs, batch_size=128, sample_interval=50):
-
+        print("Training music_gan")
         # Load the dataset
         #(X_train, _), (_, _) = mnist.load_data()
         X_train = self.load_data()
@@ -173,5 +175,7 @@ class GAN():
 
 
 if __name__ == '__main__':
+    print("music_gan.py v0.1")
+
     gan = GAN()
     gan.train(epochs=30000, batch_size=784, sample_interval=1)

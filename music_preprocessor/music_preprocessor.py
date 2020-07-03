@@ -72,18 +72,14 @@ def normalize_concatenate_save():
 
 
 def reshape_save():
-    print("Reshaping and saving...")
+    print("Reshaping and saving")
 
-    big_music = np.empty((1, 1))
+    print("Loading big_music.list...")
 
-    print("Loading big_music.npy...")
+    big_music = []
 
-    with open("big_music.npy", 'rb') as file:
-        big_music = np.load(file)
-
-    print("Listifying big_music...")
-
-    big_music = list(big_music)
+    with open("big_music_imgs.list", "rb") as file:
+        big_music = file.readlines()
 
     print("Building colums...")
 
@@ -127,8 +123,7 @@ def reshape_save():
 
     print("Saving big_music_imgs.npy...")
 
-    with open("big_music_imgs.npy", "wb") as file:
-        np.save(file, np.asarray(samples))
+    np.save("big_music_imgs.list", samples)
 
 
 
@@ -136,5 +131,5 @@ if __name__ == '__main__':
     print("Music Preprocessor v0.1")
 
     #flatten_dir()
-    #normalize_concatenate_save()
+    normalize_concatenate_save()
     reshape_save()
