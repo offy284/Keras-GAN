@@ -12,7 +12,6 @@ from sklearn.preprocessing import MinMaxScaler
 
 def flatten_dir(dir):
     print("Flattening MusicData directory...")
-
     all_files = []
     dups = 0
 
@@ -33,12 +32,10 @@ def flatten_dir(dir):
 
 def normalize_concatenate_save():
     print("Generating big_music from MusicData directory...")
-
     onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
     big_music = list()
 
     print("Normalizing big_music...")
-
     for i in tqdm(range(len(onlyfiles))):
         file = onlyfiles[i]
         if "-converted" in file:
@@ -62,8 +59,7 @@ def normalize_concatenate_save():
     #scipy.io.wavfile.write("big_music.wav", 44100, big_music)
 
     print("Saving big_music.str...")
-
-    with open("big_music.npy", 'w') as file:
+    with open("big_music.str", 'w') as file:
         file.write(str(big_music))
 
 
@@ -112,15 +108,13 @@ def reshape_save():
         start += 28
         end += 28
 
-    print("Saving big_music_imgs.list...")
-    with open("big_music_imgs.list", "w") as file:
-        file.write("big_music_imgs.npy", samples)
-
+    print("Saving big_music_imgs.str...")
+    with open("big_music_imgs.str", "w") as file:
+        file.write(str(samples))
 
 
 if __name__ == '__main__':
     print("Music Preprocessor v0.1")
-
     #flatten_dir()
     normalize_concatenate_save()
     reshape_save()
