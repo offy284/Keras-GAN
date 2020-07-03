@@ -26,7 +26,7 @@ class INFOGAN():
         self.latent_dim = 72
 
 
-        optimizer = Adam(0.0002, 0.5)
+        optimizer = Adam(0.00002, 0.2)
         losses = ['binary_crossentropy', self.mutual_info_loss]
 
         # Build and the discriminator and recognition network
@@ -226,4 +226,4 @@ class INFOGAN():
 
 if __name__ == '__main__':
     infogan = INFOGAN()
-    infogan.train(epochs=50000, batch_size=128, sample_interval=50)
+    infogan.train(epochs=50000, batch_size=128, sample_interval=1)

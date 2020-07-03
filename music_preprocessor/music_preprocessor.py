@@ -1,8 +1,13 @@
 import os
 import itertools
 import shutil
-
-import scipy as scipy
+import numpy as np
+import scipy
+from scipy.io.wavfile import write, read
+from os import listdir
+from os.path import isfile, join
+from tqdm import tqdm
+from sklearn.preprocessing import MinMaxScaler
 
 
 def move(destination):
@@ -20,27 +25,30 @@ def move(destination):
             print("DUP")
 
 
-import numpy as np
-import scipy
-from scipy.io.wavfile import write, read
-from os import listdir
-from os.path import isfile, join
-from tqdm import tqdm
+def normalize_concatenate_save():
+    onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
+
+    big_music = np.zeros((1, 1))
+
+    for i in tqdm(range(len(onlyfiles))):
+        file = onlyfiles[i]
+        if "-converted" in file:
+            x = scipy.io.wavfile.read(f"MusicData/{file}")
+            x = x[1]
+            x = x.reshape((-1, 1))
+
+            min_max_scaler = MinMaxScaler()
+            x = (min_max_scaler.fit_transform(x) - .5) * 2
+
+            print(f"Max: {x.max()}, Min: {x.min()}")
+
+            big_music = np.concatenate([big_music, x])
 
 
-onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
+    #scipy.io.wavfile.write("big_music.wav", 44100, big_music)
 
-big_music = np.zeros((1, 2))
-
-for _ in tqdm(range(len(onlyfiles))):
-    file = onlyfiles[1]
-    if "-converted" in file:
-        x = scipy.io.wavfile.read(f"MusicData/{file}")
-        x = x[1]
-        big_music = np.concatenate([big_music, x])
+    with open("big_music.npy", 'wb') as file:
+        np.save(file, big_music)
 
 
-#scipy.io.wavfile.write("big_music.wav", 22050, big_music)
-
-with open("big_music.dat", 'wb') as file:
-    file.write(big_music)
+normalize_concatenate_save()

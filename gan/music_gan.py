@@ -1,5 +1,7 @@
 from __future__ import print_function, division
 
+import tensorflow as tf
+
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D
@@ -89,14 +91,27 @@ class GAN():
 
         return Model(img, validity)
 
+    def load_data(self):
+        big_music = np.load("big_music.npy")
+
+        print(f"big_music is {big_music.shape[0]} samples large with {big_music.shape[1]} channels")
+
+        return big_music
+
     def train(self, epochs, batch_size=128, sample_interval=50):
 
         # Load the dataset
-        (X_train, _), (_, _) = mnist.load_data()
+        #(X_train, _), (_, _) = mnist.load_data()
+        X_train = self.load_data()
 
         # Rescale -1 to 1
-        X_train = X_train / 127.5 - 1.
-        X_train = np.expand_dims(X_train, axis=3)
+        #X_train = X_train / 127.5 - 1.
+
+        X_train = np.expand_dims(X_train, axis=2)
+
+        X_train = X_train / np.linalg.norm(X_train)
+
+        print(X_train)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -159,4 +174,4 @@ class GAN():
 
 if __name__ == '__main__':
     gan = GAN()
-    gan.train(epochs=30000, batch_size=32, sample_interval=1)
+    gan.train(epochs=30000, batch_size=784, sample_interval=1)

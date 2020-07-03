@@ -142,20 +142,27 @@ class INFOGAN():
 
         return sampled_noise, sampled_labels
 
+    def load_data(self):
+        big_music = np.load("big_music.npy")
+
+        print(f"big_music is {big_music.shape[0]} samples large with {big_music.shape[1]} channels")
+
+        return big_music
+
     def train(self, epochs, batch_size=128, sample_interval=50):
 
-        X_train = read("big_music.wav")
-        X_train = np.array(X_train[1], dtype=float)
+        X_train = self.load_data()
+        #X_train = np.array(X_train[1], dtype=float)
 
         print(X_train.shape)
 
         # Load the dataset
-        (X_train, y_train), (_, _) = mnist.load_data()
+        #(X_train, y_train), (_, _) = mnist.load_data()
 
         # Rescale -1 to 1
         X_train = (X_train.astype(np.float32) - 127.5) / 127.5
-        X_train = np.expand_dims(X_train, axis=3)
-        y_train = y_train.reshape(-1, 1)
+        X_train = np.expand_dims(X_train, axis=2)
+        #y_train = y_train.reshape(-1, 1)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
