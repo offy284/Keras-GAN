@@ -113,7 +113,8 @@ def reshape_save():
         end += 28
 
     print("Saving big_music_imgs.list...")
-    np.save("big_music_imgs.list", samples)
+    with open("big_music_imgs.list", "w") as file:
+        file.write("big_music_imgs.npy", samples)
 
 
 
