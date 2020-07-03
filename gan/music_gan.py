@@ -92,9 +92,14 @@ class GAN():
         return Model(img, validity)
 
     def load_data(self):
-        print("Loading big_music_imgs.npy...")
+        print("Loading big_music_imgs.str...")
+        big_music_imgs = np.load("big_music_imgs.str")
 
-        big_music_imgs = np.load("big_music_imgs.npy")
+        print("Listifying big_music_imgs.str...")
+        big_music_imgs = list(big_music_imgs)
+
+        print("Numpyifying big_music_imgs...")
+        big_music_imgs = np.asarray(big_music_imgs)
 
         print(f"big_music_imgs is of shape {big_music_imgs.shape}")
 

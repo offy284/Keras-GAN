@@ -59,32 +59,27 @@ def normalize_concatenate_save():
 
             #print(f"Max: {max(x)}, Min: {max(min)}")
 
-    print("Numpyifying big_music...")
-
-    big_music = np.asarray(big_music)
-
     #scipy.io.wavfile.write("big_music.wav", 44100, big_music)
 
-    print("Saving big_music.npy...")
+    print("Saving big_music.str...")
 
-    with open("big_music.npy", 'wb') as file:
-        np.save(file, big_music)
+    with open("big_music.npy", 'w') as file:
+        file.write(str(big_music))
 
 
 def reshape_save():
     print("Reshaping and saving")
 
-    print("Loading big_music.list...")
-
+    print("Loading big_music.str...")
     big_music = []
-
-    with open("big_music_imgs.list", "rb") as file:
+    with open("big_music.str", "r") as file:
         big_music = file.readlines()
 
+    print("Listifying big_music...")
+    big_music = list(big_music)
+
     print("Building colums...")
-
     cols = []
-
     start = 0
     end = 28
 
@@ -96,9 +91,7 @@ def reshape_save():
         end += 28
 
     print("Building rows...")
-
     rows = []
-
     start = 0
     end = 28
 
@@ -109,9 +102,7 @@ def reshape_save():
         end += 28
 
     print("Building samples...")
-
     samples = []
-
     start = 0
     end = 28
 
@@ -121,8 +112,7 @@ def reshape_save():
         start += 28
         end += 28
 
-    print("Saving big_music_imgs.npy...")
-
+    print("Saving big_music_imgs.list...")
     np.save("big_music_imgs.list", samples)
 
 
