@@ -10,11 +10,11 @@ from keras.optimizers import Adam
 from keras.utils import to_categorical
 import keras.backend as K
 
+import tensorflow as tf
+
 import matplotlib.pyplot as plt
 
 import numpy as np
-
-from scipy.io.wavfile import read
 
 class INFOGAN():
     def __init__(self):
@@ -26,7 +26,7 @@ class INFOGAN():
         self.latent_dim = 72
 
 
-        optimizer = Adam(0.0002, 0.5)
+        optimizer = Adam(0.00002, 0.2)
         losses = ['binary_crossentropy', self.mutual_info_loss]
 
         # Build and the discriminator and recognition network
@@ -142,27 +142,15 @@ class INFOGAN():
 
         return sampled_noise, sampled_labels
 
-    def load_data(self):
-        big_music = np.load("big_music.npy")
-
-        print(f"big_music is {big_music.shape[0]} samples large with {big_music.shape[1]} channels")
-
-        return big_music
-
     def train(self, epochs, batch_size=128, sample_interval=50):
 
-        X_train = self.load_data()
-        #X_train = np.array(X_train[1], dtype=float)
-
-        print(X_train.shape)
-
         # Load the dataset
-        #(X_train, y_train), (_, _) = mnist.load_data()
+        (X_train, y_train), (_, _) = mnist.load_data()
 
         # Rescale -1 to 1
         X_train = (X_train.astype(np.float32) - 127.5) / 127.5
-        X_train = np.expand_dims(X_train, axis=2)
-        #y_train = y_train.reshape(-1, 1)
+        X_train = np.expand_dims(X_train, axis=3)
+        y_train = y_train.reshape(-1, 1)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -238,4 +226,4 @@ class INFOGAN():
 
 if __name__ == '__main__':
     infogan = INFOGAN()
-    infogan.train(epochs=50000, batch_size=128, sample_interval=50)
+    infogan.train(epochs=50000, batch_size=128, sample_interval=1)

@@ -1,54 +1,140 @@
-import os
 import itertools
 import shutil
-import numpy as np
-import scipy
-from scipy.io.wavfile import write, read
+import os
 from os import listdir
 from os.path import isfile, join
 from tqdm import tqdm
+import numpy as np
+import scipy
+from scipy.io.wavfile import write, read
 from sklearn.preprocessing import MinMaxScaler
 
 
-def move(destination):
+def flatten_dir(dir):
+    print("Flattening MusicData directory...")
+
     all_files = []
-    for root, _dirs, files in itertools.islice(os.walk(destination), 1, None):
+    dups = 0
+
+    for root, _dirs, files in itertools.islice(os.walk(dir), 1, None):
         try:
             for filename in files:
                 all_files.append(os.path.join(root, filename))
         except:
-            print("DUP")
+            dups += 1
     for filename in all_files:
         try:
-            shutil.move(filename, destination)
+            shutil.move(filename, dir)
         except:
-            print("DUP")
+            dups += 1
+
+    print(f"{dups} duplicate files removed")
 
 
 def normalize_concatenate_save():
-    onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
+    print("Generating big_music from MusicData directory...")
 
-    big_music = np.zeros((1, 1))
+    onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
+    big_music = list()
+
+    print("Normalizing big_music...")
 
     for i in tqdm(range(len(onlyfiles))):
         file = onlyfiles[i]
         if "-converted" in file:
             x = scipy.io.wavfile.read(f"MusicData/{file}")
             x = x[1]
-            x = x.reshape((-1, 1))
+
+            x = x.reshape(-1, 1)
 
             min_max_scaler = MinMaxScaler()
             x = (min_max_scaler.fit_transform(x) - .5) * 2
 
-            print(f"Max: {x.max()}, Min: {x.min()}")
+            for sample in x:
+                sample = sample[0]
 
-            big_music = np.concatenate([big_music, x])
+            for sample in x:
+                for channel in sample:
+                    big_music.append(float(channel))
 
+            #print(f"Max: {max(x)}, Min: {max(min)}")
+
+    print("Numpyifying big_music...")
+
+    big_music = np.asarray(big_music)
 
     #scipy.io.wavfile.write("big_music.wav", 44100, big_music)
+
+    print("Saving big_music.npy...")
 
     with open("big_music.npy", 'wb') as file:
         np.save(file, big_music)
 
 
-normalize_concatenate_save()
+def reshape_save():
+    print("Reshaping and saving...")
+
+    big_music = np.empty((1, 1))
+
+    print("Loading big_music.npy...")
+
+    with open("big_music.npy", 'rb') as file:
+        big_music = np.load(file)
+
+    print("Listifying big_music...")
+
+    big_music = list(big_music)
+
+    print("Building colums...")
+
+    cols = []
+
+    start = 0
+    end = 28
+
+    for sample in tqdm(range(len(big_music))):
+        col = big_music[start:end]
+        cols.append(col)
+
+        start += 28
+        end += 28
+
+    print("Building rows...")
+
+    rows = []
+
+    start = 0
+    end = 28
+
+    for col in tqdm(range(len(cols))):
+        row = cols[start:end]
+
+        start += 28
+        end += 28
+
+    print("Building samples...")
+
+    samples = []
+
+    start = 0
+    end = 28
+
+    for row in tqdm(range(len(rows))):
+        samples.append(rows[start:end])
+
+        start += 28
+        end += 28
+
+    print("Saving big_music_imgs.npy...")
+
+    with open("big_music_imgs.npy", "wb") as file:
+        np.save(file, np.asarray(samples))
+
+
+
+if __name__ == '__main__':
+    print("Music Preprocessor v0.1")
+
+    #flatten_dir()
+    #normalize_concatenate_save()
+    reshape_save()

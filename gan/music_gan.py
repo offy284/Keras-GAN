@@ -107,7 +107,7 @@ class GAN():
         # Rescale -1 to 1
         #X_train = X_train / 127.5 - 1.
 
-        X_train = np.expand_dims(X_train, axis=2)
+        #X_train = np.expand_dims(X_train, axis=2)
 
         X_train = X_train / np.linalg.norm(X_train)
 
