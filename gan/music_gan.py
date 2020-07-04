@@ -15,8 +15,8 @@ import pickle
 
 class GAN():
     def __init__(self):
-        self.img_rows = 28
-        self.img_cols = 28
+        self.img_rows = 28 * 50
+        self.img_cols = 28 * 50
         self.channels = 1
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
         self.latent_dim = 100
@@ -167,4 +167,4 @@ if __name__ == '__main__':
     print("music_gan.py v0.1")
 
     gan = GAN()
-    gan.train(epochs=30000, batch_size=128, sample_interval=1)
+    gan.train(epochs=30000, batch_size=128*50, sample_interval=1)
