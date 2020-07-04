@@ -36,8 +36,8 @@ def generate_big_music(resolution_scale=20):
     onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
 
     print("Normalizing big_music...")
-    big_music = []
     square_size = 28 * resolution_scale
+    big_music = np.empty((len(onlyfiles), square_size, square_size, 1))
 
     for i in tqdm(range(len(onlyfiles))):
         file = onlyfiles[i]
@@ -49,8 +49,6 @@ def generate_big_music(resolution_scale=20):
 
             min_max_scaler = MinMaxScaler()
             x = (min_max_scaler.fit_transform(x) - .5) * 2
-
-            print((int(x.shape[0] / square_size / square_size)))
 
             samples = list(np.empty((int(x.shape[0] / square_size / square_size), square_size, square_size, 1)))
             rows = np.zeros((square_size, square_size, 1))
@@ -66,15 +64,13 @@ def generate_big_music(resolution_scale=20):
             print("Numpyifying samples...")
             samples = np.asarray(samples)
 
-            big_music.append(samples)
+            big_music = np.concatenate([big_music, samples])
             #print(f"Max: {max(x)}, Min: {max(min)}")
 
     #scipy.io.wavfile.write("big_music.wav", 44100, big_music)
 
-    print("Numpyifying big_music...")
-    big_music = np.asarray(big_music)
-
-    big_music = big_music.reshape((big_music.shape[1], square_size, square_size, 1))
+    print(big_music.shape)
+    big_music = big_music.reshape((big_music.shape[0], square_size, square_size, 1))
 
     print(f"big_music is of shape {big_music.shape}")
 
