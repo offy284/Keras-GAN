@@ -10,7 +10,7 @@ from scipy.io.wavfile import write, read
 from sklearn.preprocessing import MinMaxScaler
 import pickle
 
-RESOLUTION_SCALE = 25
+RESOLUTION_SCALE = 5
 
 
 def flatten_dir(dir):

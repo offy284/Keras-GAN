@@ -16,10 +16,15 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 
+
+RESOLUTION_SCALE = 5
+
+
 class INFOGAN():
-    def __init__(self):
-        self.img_rows = 28
-        self.img_cols = 28
+    def __init__(self, resolution_scale=20):
+        self.resolution_scale = resolution_scale
+        self.img_rows = 28 * self.resolution_scale
+        self.img_cols = 28 * self.resolution_scale
         self.channels = 1
         self.num_classes = 10
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
@@ -80,6 +85,9 @@ class INFOGAN():
         model.add(BatchNormalization(momentum=0.8))
         model.add(Conv2D(self.channels, kernel_size=3, padding='same'))
         model.add(Activation("tanh"))
+        model.add(Flatten())
+        model.add(Dense(np.prod(self.img_shape), activation='tanh'))
+        model.add(Reshape(self.img_shape))
 
         gen_input = Input(shape=(self.latent_dim,))
         img = model(gen_input)
@@ -142,15 +150,23 @@ class INFOGAN():
 
         return sampled_noise, sampled_labels
 
-    def train(self, epochs, batch_size=128, sample_interval=50):
+    def load_data(self):
+        filename = "big_music.npy"
+
+        print(f"Loading {filename}...")
+        np_samples = np.load("big_music.npy")
+
+        print(f"np_samples is of shape {np_samples.shape}")
+        return np_samples
+
+    def train(self, epochs, batch_size=128*RESOLUTION_SCALE, sample_interval=50):
 
         # Load the dataset
-        (X_train, y_train), (_, _) = mnist.load_data()
+        X_train = self.load_data()
 
         # Rescale -1 to 1
-        X_train = (X_train.astype(np.float32) - 127.5) / 127.5
-        X_train = np.expand_dims(X_train, axis=3)
-        y_train = y_train.reshape(-1, 1)
+        X_train = X_train / np.linalg.norm(X_train)
+        #X_train = np.expand_dims(X_train, axis=3)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -194,19 +210,24 @@ class INFOGAN():
                 self.sample_images(epoch)
 
     def sample_images(self, epoch):
-        r, c = 10, 10
+        r, c = 5, 5
+        noise = np.random.normal(0, 1, (r * c, self.latent_dim))
+        gen_imgs = self.generator.predict(noise)
+
+        # Rescale images 0 - 1
+        gen_imgs = 0.5 * gen_imgs + 0.5
 
         fig, axs = plt.subplots(r, c)
-        for i in range(c):
-            sampled_noise, _ = self.sample_generator_input(c)
-            label = to_categorical(np.full(fill_value=i, shape=(r,1)), num_classes=self.num_classes)
-            gen_input = np.concatenate((sampled_noise, label), axis=1)
-            gen_imgs = self.generator.predict(gen_input)
-            gen_imgs = 0.5 * gen_imgs + 0.5
-            for j in range(r):
-                axs[j,i].imshow(gen_imgs[j,:,:,0], cmap='gray')
-                axs[j,i].axis('off')
-        fig.savefig("images/%d.png" % epoch)
+        cnt = 0
+        for i in range(r):
+            for j in range(c):
+                axs[i, j].imshow(gen_imgs[cnt, :, :, 0], cmap='gray')
+                axs[i, j].axis('off')
+
+                np.save(f"song_r{i}-c{j}", gen_imgs[cnt, :, :, 0].reshape(-1))
+
+                cnt += 1
+        fig.savefig("music_images/%d.png" % epoch)
         plt.close()
 
     def save_model(self):
@@ -225,5 +246,5 @@ class INFOGAN():
 
 
 if __name__ == '__main__':
-    infogan = INFOGAN()
-    infogan.train(epochs=50000, batch_size=128, sample_interval=1)
+    infogan = INFOGAN(resolution_scale=RESOLUTION_SCALE)
+    infogan.train(epochs=50000, batch_size=128*infogan.resolution_scale, sample_interval=1)

@@ -103,7 +103,7 @@ class GAN():
         print(f"np_samples is of shape {np_samples.shape}")
         return np_samples
 
-    def train(self, epochs, batch_size=128, sample_interval=50):
+    def train(self, epochs, batch_size=128*RESOLUTION_SCALE, sample_interval=50):
         print("music_gan v0.1")
 
         X_train = self.load_data()
@@ -167,9 +167,9 @@ class GAN():
                     axs[i, j].axis('off')
 
                     np.save(f"song_r{i}-c{j}", gen_imgs[cnt, :, :, 0].reshape(-1))
-                    
+
                     cnt += 1
-            fig.savefig("images/%d.png" % epoch)
+            fig.savefig("music_images/%d.png" % epoch)
             plt.close()
 
 
