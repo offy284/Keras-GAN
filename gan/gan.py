@@ -96,8 +96,9 @@ class GAN():
 
         # Rescale -1 to 1
         X_train = X_train / 127.5 - 1.
-        print(X_train.shape)
         X_train = np.expand_dims(X_train, axis=3)
+
+        print(X_train.shape)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -164,4 +165,4 @@ class GAN():
 
 if __name__ == '__main__':
     gan = GAN()
-    gan.train(epochs=50000, batch_size=32, sample_interval=1)
+    gan.train(epochs=50000, batch_size=128, sample_interval=1)

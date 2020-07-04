@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 import pickle
-from tqdm import tqdm
 
 
 class GAN():
@@ -19,7 +18,7 @@ class GAN():
         self.img_rows = 28
         self.img_cols = 28
         self.channels = 1
-        self.img_shape = (self.img_rows, self.img_cols)
+        self.img_shape = (self.img_rows, self.img_cols, self.channels)
         self.latent_dim = 100
 
         optimizer = Adam(0.0002, 0.5)
@@ -76,7 +75,8 @@ class GAN():
 
         model = Sequential()
 
-        model.add(Dense(512, input_shape=self.img_shape))
+        model.add(Flatten(input_shape=self.img_shape))
+        model.add(Dense(512))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(256))
         model.add(LeakyReLU(alpha=0.2))
@@ -89,44 +89,20 @@ class GAN():
         return Model(img, validity)
 
     def load_data(self):
-        filename = "big_music.dat"
+        filename = "big_music.npy"
+
         print(f"Loading {filename}...")
-
-        big_music = pickle.load(open(f"{filename}", "rb"))
-        rows = []
-        samples = []
-
-        print("Reshaping big_music...")
-        for sample in tqdm(range(int(len(big_music) / 28 / 28))):
-            row = []
-            for i in range(28):
-                for j in range(28):
-                    row.append([big_music[j + (i * 28) + (sample * 28 * 28)]])
-                rows.append(row)
-            samples.append(rows)
-
-        print("Numpyifying samples...")
-        np_samples = np.asarray(samples)
+        np_samples = np.load("big_music.npy")
 
         print(f"np_samples is of shape {np_samples.shape}")
-
         return np_samples
 
     def train(self, epochs, batch_size=128, sample_interval=50):
-        print("-Training music_gan-")
-        # Load the dataset
-        #(X_train, _), (_, _) = mnist.load_data()
+        print("music_gan v0.1")
+
         X_train = self.load_data()
-
-        print(X_train.shape)
-
         X_train = X_train / np.linalg.norm(X_train)
-
-        print(X_train.shape)
-
-        X_train = np.expand_dims(X_train, axis=3)
-
-
+        #X_train = np.expand_dims(X_train, axis=3)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -147,10 +123,6 @@ class GAN():
             # Generate a batch of new images
             gen_imgs = self.generator.predict(noise)
 
-            print(imgs.shape)
-            print(gen_imgs.shape)
-            print(valid.shape)
-
             # Train the discriminator
             d_loss_real = self.discriminator.train_on_batch(imgs, valid)
             d_loss_fake = self.discriminator.train_on_batch(gen_imgs, fake)
@@ -166,33 +138,33 @@ class GAN():
             g_loss = self.combined.train_on_batch(noise, valid)
 
             # Plot the progress
-            print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss))
+            print("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100 * d_loss[1], g_loss))
 
             # If at save interval => save generated image samples
             if epoch % sample_interval == 0:
                 self.sample_images(epoch)
 
     def sample_images(self, epoch):
-        r, c = 5, 5
-        noise = np.random.normal(0, 1, (self.img_shape[0]))
-        gen_imgs = self.generator.predict(noise)
+            r, c = 5, 5
+            noise = np.random.normal(0, 1, (r * c, self.latent_dim))
+            gen_imgs = self.generator.predict(noise)
 
-        # Rescale images 0 - 1
-        gen_imgs = 0.5 * gen_imgs + 0.5
+            # Rescale images 0 - 1
+            gen_imgs = 0.5 * gen_imgs + 0.5
 
-        fig, axs = plt.subplots(r, c)
-        cnt = 0
-        for i in range(r):
-            for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
-                axs[i,j].axis('off')
-                cnt += 1
-        fig.savefig("images/%d.png" % epoch)
-        plt.close()
+            fig, axs = plt.subplots(r, c)
+            cnt = 0
+            for i in range(r):
+                for j in range(c):
+                    axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
+                    axs[i,j].axis('off')
+                    cnt += 1
+            fig.savefig("images/%d.png" % epoch)
+            plt.close()
 
 
 if __name__ == '__main__':
     print("music_gan.py v0.1")
 
     gan = GAN()
-    gan.train(epochs=30000, batch_size=784, sample_interval=1)
+    gan.train(epochs=30000, batch_size=128, sample_interval=1)

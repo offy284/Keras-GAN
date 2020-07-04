@@ -31,7 +31,7 @@ def flatten_dir(dir):
     print(f"{dups} duplicate files removed")
 
 
-def normalize_concatenate_save():
+def generate_big_music():
     print("Generating big_music from MusicData directory...")
     onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
 
@@ -68,38 +68,16 @@ def normalize_concatenate_save():
     print("Numpyifying big_music...")
     big_music = np.asarray(big_music)
 
+    big_music = big_music.reshape((big_music.shape[1], 28, 28, 1))
+
+    print(f"big_music is of shape {big_music.shape}")
+
     filename = "big_music.npy"
     print(f"Saving {filename}...")
     np.save(f"{filename}", big_music )
 
 
-def reshape_save():
-    print("Reshaping and saving")
-
-    filename = "big_music.dat"
-    print(f"Loading {filename}...")
-    big_music = pickle.load(open(f"{filename}", "rb"))
-
-
-    rows = []
-    samples = []
-
-    print("Reshaping big_music...")
-    for sample in tqdm(range(int(len(big_music) / 28 / 28))):
-        row = []
-        for i in range(28):
-            for j in range(28):
-                row.append([big_music[j + (i * 28) + (sample * 28 * 28)]])
-            rows.append(row)
-        samples.append(rows)
-
-    filename = "samples.dat"
-    print(f"Saving {filename}...")
-    pickle.dump(samples, open(f"{filename}", "wb"))
-
-
 if __name__ == '__main__':
     print("Music Preprocessor v0.1")
     #flatten_dir()
-    normalize_concatenate_save()
-    #reshape_save()
+    generate_big_music()
