@@ -17,8 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-RESOLUTION_SCALE = 5
-
+RESOLUTION_SCALE = 10
 
 class INFOGAN():
     def __init__(self, resolution_scale=20):
@@ -151,10 +150,9 @@ class INFOGAN():
         return sampled_noise, sampled_labels
 
     def load_data(self):
-        filename = "big_music.npy"
-
+        filename = f"big_music_x{RESOLUTION_SCALE}.npy"
         print(f"Loading {filename}...")
-        np_samples = np.load("big_music.npy")
+        np_samples = np.load(filename)
 
         print(f"np_samples is of shape {np_samples.shape}")
         return np_samples
@@ -224,7 +222,7 @@ class INFOGAN():
                 axs[i, j].imshow(gen_imgs[cnt, :, :, 0], cmap='gray')
                 axs[i, j].axis('off')
 
-                np.save(f"song_r{i}-c{j}", gen_imgs[cnt, :, :, 0].reshape(-1))
+                np.save(f"music/song_{i * c + j}-epoch_{epoch}", gen_imgs[cnt, :, :, 0].reshape(-1))
 
                 cnt += 1
         fig.savefig("music_images/%d.png" % epoch)

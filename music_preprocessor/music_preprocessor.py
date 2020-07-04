@@ -10,7 +10,7 @@ from scipy.io.wavfile import write, read
 from sklearn.preprocessing import MinMaxScaler
 import pickle
 
-RESOLUTION_SCALE = 5
+RESOLUTION_SCALE = 10
 
 
 def flatten_dir(dir):
@@ -76,9 +76,9 @@ def generate_big_music(resolution_scale=RESOLUTION_SCALE):
 
     print(f"big_music is of shape {big_music.shape}")
 
-    filename = "big_music.npy"
+    filename = f"big_music_x{RESOLUTION_SCALE}.npy"
     print(f"Saving {filename}...")
-    np.save(f"{filename}", big_music )
+    np.save(f"{filename}", big_music)
 
 
 if __name__ == '__main__':

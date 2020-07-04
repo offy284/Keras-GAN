@@ -14,7 +14,8 @@ from scipy.io.wavfile import write, read
 import numpy as np
 import pickle
 
-RESOLUTION_SCALE = 25
+
+RESOLUTION_SCALE = 10
 
 
 class GAN():
@@ -95,10 +96,9 @@ class GAN():
         return Model(img, validity)
 
     def load_data(self):
-        filename = "big_music.npy"
-
+        filename = f"big_music_x{RESOLUTION_SCALE}.npy"
         print(f"Loading {filename}...")
-        np_samples = np.load("big_music.npy")
+        np_samples = np.load(filename)
 
         print(f"np_samples is of shape {np_samples.shape}")
         return np_samples
@@ -152,29 +152,29 @@ class GAN():
                 self.sample_images(epoch)
 
     def sample_images(self, epoch):
-            r, c = 5, 5
-            noise = np.random.normal(0, 1, (r * c, self.latent_dim))
-            gen_imgs = self.generator.predict(noise)
+        r, c = 5, 5
+        noise = np.random.normal(0, 1, (r * c, self.latent_dim))
+        gen_imgs = self.generator.predict(noise)
 
-            # Rescale images 0 - 1
-            gen_imgs = 0.5 * gen_imgs + 0.5
+        # Rescale images 0 - 1
+        gen_imgs = 0.5 * gen_imgs + 0.5
 
-            fig, axs = plt.subplots(r, c)
-            cnt = 0
-            for i in range(r):
-                for j in range(c):
-                    axs[i,j].imshow(gen_imgs[cnt, :, :, 0], cmap='gray')
-                    axs[i, j].axis('off')
+        fig, axs = plt.subplots(r, c)
+        cnt = 0
+        for i in range(r):
+            for j in range(c):
+                axs[i, j].imshow(gen_imgs[cnt, :, :, 0], cmap='gray')
+                axs[i, j].axis('off')
 
-                    np.save(f"song_r{i}-c{j}", gen_imgs[cnt, :, :, 0].reshape(-1))
+                np.save(f"music/song_{i * c + j}-epoch_{epoch}", gen_imgs[cnt, :, :, 0].reshape(-1))
 
-                    cnt += 1
-            fig.savefig("music_images/%d.png" % epoch)
-            plt.close()
+                cnt += 1
+        fig.savefig("music_images/%d.png" % epoch)
+        plt.close()
 
 
 if __name__ == '__main__':
     print("music_gan.py v0.1")
 
     gan = GAN(resolution_scale=RESOLUTION_SCALE)
-    gan.train(epochs=30000, batch_size=128*gan.resolution_scale, sample_interval=1)
+    gan.train(epochs=50000, batch_size=128*gan.resolution_scale, sample_interval=1)
