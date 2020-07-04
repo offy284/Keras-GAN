@@ -31,12 +31,13 @@ def flatten_dir(dir):
     print(f"{dups} duplicate files removed")
 
 
-def generate_big_music():
+def generate_big_music(resolution_scale=20):
     print("Generating big_music from MusicData directory...")
     onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
 
     print("Normalizing big_music...")
     big_music = []
+    square_size = 28 * resolution_scale
 
     for i in tqdm(range(len(onlyfiles))):
         file = onlyfiles[i]
@@ -49,16 +50,21 @@ def generate_big_music():
             min_max_scaler = MinMaxScaler()
             x = (min_max_scaler.fit_transform(x) - .5) * 2
 
-            samples = np.zeros((int(x.shape[0] / 28 / 28), 28, 28, 1))
-            rows = np.zeros((28, 28, 1))
-            cols = np.zeros((28, 1))
+            print((int(x.shape[0] / square_size / square_size)))
 
-            for samplei in tqdm(range(samples.shape[0])):
-                for yi in range(28):
-                    for xi in range(28):
-                        cols[xi] = x[xi + yi * 28 + samplei * 28 * 28]
+            samples = list(np.empty((int(x.shape[0] / square_size / square_size), square_size, square_size, 1)))
+            rows = np.zeros((square_size, square_size, 1))
+            cols = np.zeros((square_size, 1))
+
+            for samplei in tqdm(range(len(samples))):
+                for yi in range(square_size):
+                    for xi in range(square_size):
+                        cols[xi] = x[xi + yi * square_size + samplei * square_size * square_size]
                     rows[yi] = cols
                 samples[samplei] = rows
+
+            print("Numpyifying samples...")
+            samples = np.asarray(samples)
 
             big_music.append(samples)
             #print(f"Max: {max(x)}, Min: {max(min)}")
@@ -68,7 +74,7 @@ def generate_big_music():
     print("Numpyifying big_music...")
     big_music = np.asarray(big_music)
 
-    big_music = big_music.reshape((big_music.shape[1], 28, 28, 1))
+    big_music = big_music.reshape((big_music.shape[1], square_size, square_size, 1))
 
     print(f"big_music is of shape {big_music.shape}")
 

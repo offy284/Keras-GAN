@@ -14,12 +14,14 @@ import pickle
 
 
 class GAN():
-    def __init__(self):
-        self.img_rows = 28 * 50
-        self.img_cols = 28 * 50
+    def __init__(self, resolution_scale=20):
+        self.resolution_scale = resolution_scale
+        self.img_rows = 28 * self.resolution_scale
+        self.img_cols = 28 * self.resolution_scale
         self.channels = 1
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
         self.latent_dim = 100
+
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -104,6 +106,7 @@ class GAN():
         X_train = X_train / np.linalg.norm(X_train)
         #X_train = np.expand_dims(X_train, axis=3)
 
+
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
         fake = np.zeros((batch_size, 1))
@@ -166,5 +169,5 @@ class GAN():
 if __name__ == '__main__':
     print("music_gan.py v0.1")
 
-    gan = GAN()
-    gan.train(epochs=30000, batch_size=128*50, sample_interval=1)
+    gan = GAN(resolution_scale=20)
+    gan.train(epochs=30000, batch_size=128*gan.resolution_scale, sample_interval=1)
