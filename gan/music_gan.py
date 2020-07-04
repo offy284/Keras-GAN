@@ -9,8 +9,12 @@ from keras.models import Sequential, Model
 from keras.optimizers import Adam
 import matplotlib.pyplot as plt
 import sys
+import scipy
+from scipy.io.wavfile import write, read
 import numpy as np
 import pickle
+
+RESOLUTION_SCALE = 25
 
 
 class GAN():
@@ -159,8 +163,11 @@ class GAN():
             cnt = 0
             for i in range(r):
                 for j in range(c):
-                    axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
-                    axs[i,j].axis('off')
+                    axs[i,j].imshow(gen_imgs[cnt, :, :, 0], cmap='gray')
+                    axs[i, j].axis('off')
+
+                    np.save(f"song_r{i}-c{j}", gen_imgs[cnt, :, :, 0].reshape(-1))
+                    
                     cnt += 1
             fig.savefig("images/%d.png" % epoch)
             plt.close()
@@ -169,5 +176,5 @@ class GAN():
 if __name__ == '__main__':
     print("music_gan.py v0.1")
 
-    gan = GAN(resolution_scale=20)
+    gan = GAN(resolution_scale=RESOLUTION_SCALE)
     gan.train(epochs=30000, batch_size=128*gan.resolution_scale, sample_interval=1)

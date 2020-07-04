@@ -10,6 +10,8 @@ from scipy.io.wavfile import write, read
 from sklearn.preprocessing import MinMaxScaler
 import pickle
 
+RESOLUTION_SCALE = 25
+
 
 def flatten_dir(dir):
     print("Flattening MusicData directory...")
@@ -31,7 +33,7 @@ def flatten_dir(dir):
     print(f"{dups} duplicate files removed")
 
 
-def generate_big_music(resolution_scale=20):
+def generate_big_music(resolution_scale=RESOLUTION_SCALE):
     print("Generating big_music from MusicData directory...")
     onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
 
