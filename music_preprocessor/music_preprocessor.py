@@ -8,6 +8,7 @@ import numpy as np
 import scipy
 from scipy.io.wavfile import write, read
 from sklearn.preprocessing import MinMaxScaler
+import pickle
 
 
 def flatten_dir(dir):
@@ -33,9 +34,10 @@ def flatten_dir(dir):
 def normalize_concatenate_save():
     print("Generating big_music from MusicData directory...")
     onlyfiles = [f for f in listdir("MusicData/") if isfile(join("MusicData/", f))]
-    big_music = list()
 
     print("Normalizing big_music...")
+    big_music = []
+
     for i in tqdm(range(len(onlyfiles))):
         file = onlyfiles[i]
         if "-converted" in file:
@@ -47,74 +49,57 @@ def normalize_concatenate_save():
             min_max_scaler = MinMaxScaler()
             x = (min_max_scaler.fit_transform(x) - .5) * 2
 
-            for sample in x:
-                sample = sample[0]
+            samples = np.zeros((int(x.shape[0] / 28 / 28), 28, 28, 1))
+            rows = np.zeros((28, 28, 1))
+            cols = np.zeros((28, 1))
 
-            for sample in x:
-                for channel in sample:
-                    big_music.append(float(channel))
+            for samplei in tqdm(range(samples.shape[0])):
+                for yi in range(28):
+                    for xi in range(28):
+                        cols[xi] = x[xi + yi * 28 + samplei * 28 * 28]
+                    rows[yi] = cols
+                samples[samplei] = rows
 
+            big_music.append(samples)
             #print(f"Max: {max(x)}, Min: {max(min)}")
 
     #scipy.io.wavfile.write("big_music.wav", 44100, big_music)
 
-    print("Saving big_music.str...")
-    with open("big_music.str", 'w') as file:
-        file.write(str(big_music))
+    print("Numpyifying big_music...")
+    big_music = np.asarray(big_music)
+
+    filename = "big_music.npy"
+    print(f"Saving {filename}...")
+    np.save(f"{filename}", big_music )
 
 
 def reshape_save():
     print("Reshaping and saving")
 
-    print("Loading big_music.str...")
-    big_music = []
-    with open("big_music.str", "r") as file:
-        big_music = file.readlines()
+    filename = "big_music.dat"
+    print(f"Loading {filename}...")
+    big_music = pickle.load(open(f"{filename}", "rb"))
 
-    print("Listifying big_music...")
-    big_music = list(big_music)
 
-    print("Building colums...")
-    cols = []
-    start = 0
-    end = 28
-
-    for sample in tqdm(range(len(big_music))):
-        col = big_music[start:end]
-        cols.append(col)
-
-        start += 28
-        end += 28
-
-    print("Building rows...")
     rows = []
-    start = 0
-    end = 28
-
-    for col in tqdm(range(len(cols))):
-        row = cols[start:end]
-
-        start += 28
-        end += 28
-
-    print("Building samples...")
     samples = []
-    start = 0
-    end = 28
 
-    for row in tqdm(range(len(rows))):
-        samples.append(rows[start:end])
+    print("Reshaping big_music...")
+    for sample in tqdm(range(int(len(big_music) / 28 / 28))):
+        row = []
+        for i in range(28):
+            for j in range(28):
+                row.append([big_music[j + (i * 28) + (sample * 28 * 28)]])
+            rows.append(row)
+        samples.append(rows)
 
-        start += 28
-        end += 28
-
-    print("Saving big_music_imgs.str...")
-    with open("big_music_imgs.str", "w") as file:
-        file.write(str(samples))
+    filename = "samples.dat"
+    print(f"Saving {filename}...")
+    pickle.dump(samples, open(f"{filename}", "wb"))
 
 
 if __name__ == '__main__':
     print("Music Preprocessor v0.1")
     #flatten_dir()
     normalize_concatenate_save()
-    reshape_save()
+    #reshape_save()

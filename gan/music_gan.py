@@ -1,7 +1,5 @@
 from __future__ import print_function, division
-
 import tensorflow as tf
-
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D
@@ -9,19 +7,19 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
-
 import matplotlib.pyplot as plt
-
 import sys
-
 import numpy as np
+import pickle
+from tqdm import tqdm
+
 
 class GAN():
     def __init__(self):
         self.img_rows = 28
         self.img_cols = 28
         self.channels = 1
-        self.img_shape = (self.img_rows, self.img_cols, self.channels)
+        self.img_shape = (self.img_rows, self.img_cols)
         self.latent_dim = 100
 
         optimizer = Adam(0.0002, 0.5)
@@ -69,7 +67,7 @@ class GAN():
 
         model.summary()
 
-        noise = Input(shape=(self.latent_dim,))
+        noise = Input(shape=self.latent_dim,)
         img = model(noise)
 
         return Model(noise, img)
@@ -78,8 +76,7 @@ class GAN():
 
         model = Sequential()
 
-        model.add(Flatten(input_shape=self.img_shape))
-        model.add(Dense(512))
+        model.add(Dense(512, input_shape=self.img_shape))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(256))
         model.add(LeakyReLU(alpha=0.2))
@@ -92,33 +89,44 @@ class GAN():
         return Model(img, validity)
 
     def load_data(self):
-        print("Loading big_music_imgs.str...")
-        big_music_imgs = np.load("big_music_imgs.str")
+        filename = "big_music.dat"
+        print(f"Loading {filename}...")
 
-        print("Listifying big_music_imgs.str...")
-        big_music_imgs = list(big_music_imgs)
+        big_music = pickle.load(open(f"{filename}", "rb"))
+        rows = []
+        samples = []
 
-        print("Numpyifying big_music_imgs...")
-        big_music_imgs = np.asarray(big_music_imgs)
+        print("Reshaping big_music...")
+        for sample in tqdm(range(int(len(big_music) / 28 / 28))):
+            row = []
+            for i in range(28):
+                for j in range(28):
+                    row.append([big_music[j + (i * 28) + (sample * 28 * 28)]])
+                rows.append(row)
+            samples.append(rows)
 
-        print(f"big_music_imgs is of shape {big_music_imgs.shape}")
+        print("Numpyifying samples...")
+        np_samples = np.asarray(samples)
 
-        return big_music_imgs
+        print(f"np_samples is of shape {np_samples.shape}")
+
+        return np_samples
 
     def train(self, epochs, batch_size=128, sample_interval=50):
-        print("Training music_gan")
+        print("-Training music_gan-")
         # Load the dataset
         #(X_train, _), (_, _) = mnist.load_data()
         X_train = self.load_data()
 
-        # Rescale -1 to 1
-        #X_train = X_train / 127.5 - 1.
-
-        #X_train = np.expand_dims(X_train, axis=2)
+        print(X_train.shape)
 
         X_train = X_train / np.linalg.norm(X_train)
 
-        print(X_train)
+        print(X_train.shape)
+
+        X_train = np.expand_dims(X_train, axis=3)
+
+
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -138,6 +146,10 @@ class GAN():
 
             # Generate a batch of new images
             gen_imgs = self.generator.predict(noise)
+
+            print(imgs.shape)
+            print(gen_imgs.shape)
+            print(valid.shape)
 
             # Train the discriminator
             d_loss_real = self.discriminator.train_on_batch(imgs, valid)
@@ -162,7 +174,7 @@ class GAN():
 
     def sample_images(self, epoch):
         r, c = 5, 5
-        noise = np.random.normal(0, 1, (r * c, self.latent_dim))
+        noise = np.random.normal(0, 1, (self.img_shape[0]))
         gen_imgs = self.generator.predict(noise)
 
         # Rescale images 0 - 1

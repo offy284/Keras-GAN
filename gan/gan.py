@@ -96,6 +96,7 @@ class GAN():
 
         # Rescale -1 to 1
         X_train = X_train / 127.5 - 1.
+        print(X_train.shape)
         X_train = np.expand_dims(X_train, axis=3)
 
         # Adversarial ground truths
@@ -116,6 +117,10 @@ class GAN():
 
             # Generate a batch of new images
             gen_imgs = self.generator.predict(noise)
+
+            print(imgs.shape)
+            print(gen_imgs.shape)
+            print(valid.shape)
 
             # Train the discriminator
             d_loss_real = self.discriminator.train_on_batch(imgs, valid)
