@@ -7,8 +7,12 @@ from tqdm import tqdm
 import numpy as np
 import scipy
 from scipy.io.wavfile import write, read
+from scipy.fftpack import fft
+from scipy import signal
+from scipy.fft import fftshift
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
-import pickle
+import matplotlib.pyplot as plt
 
 RESOLUTION_SCALE = 10
 
@@ -39,7 +43,7 @@ def generate_big_music(resolution_scale=RESOLUTION_SCALE):
 
     print("Normalizing big_music...")
     square_size = 28 * resolution_scale
-    big_music = np.empty((len(onlyfiles), square_size, square_size, 1))
+    big_music = np.empty((1))  # np.empty((len(onlyfiles), square_size, square_size, 1))
 
     for i in tqdm(range(len(onlyfiles))):
         file = onlyfiles[i]
@@ -47,6 +51,14 @@ def generate_big_music(resolution_scale=RESOLUTION_SCALE):
             x = scipy.io.wavfile.read(f"MusicData/{file}")
             x = x[1]
 
+            #big_music = big_music.reshape(-1)
+
+            '''
+            print(f"Building spectrogram...")
+            
+            plt.specgram(x, Fs=44100)
+            plt.savefig(f'MusicImageData/{file}.png')
+            
             x = x.reshape(-1, 1)
 
             min_max_scaler = MinMaxScaler()
@@ -62,23 +74,21 @@ def generate_big_music(resolution_scale=RESOLUTION_SCALE):
                         cols[xi] = x[xi + yi * square_size + samplei * square_size * square_size]
                     rows[yi] = cols
                 samples[samplei] = rows
+            '''
 
-            print("Numpyifying samples...")
-            samples = np.asarray(samples)
-
-            big_music = np.concatenate([big_music, samples])
-            #print(f"Max: {max(x)}, Min: {max(min)}")
-
-    #scipy.io.wavfile.write("big_music.wav", 44100, big_music)
-
-    print(big_music.shape)
-    big_music = big_music.reshape((big_music.shape[0], square_size, square_size, 1))
+            print("Numpyifying x...")
+            big_music = np.concatenate([big_music, x])
 
     print(f"big_music is of shape {big_music.shape}")
 
-    filename = f"big_music_x{RESOLUTION_SCALE}.npy"
+    freqs, times, spectrogram = signal.spectrogram(big_music, 44100)
+    spectrogram = spectrogram.reshape((spectrogram.shape[1], spectrogram.shape[0]))
+
+    print(spectrogram.shape)
+
+    filename = f"spectrogram.npy"
     print(f"Saving {filename}...")
-    np.save(f"{filename}", big_music)
+    np.save(f"{filename}", spectrogram)
 
 
 if __name__ == '__main__':

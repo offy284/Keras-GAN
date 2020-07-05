@@ -1,26 +1,29 @@
 from __future__ import print_function, division
-
+import tensorflow as tf
 from keras.datasets import mnist
-from keras.layers import Input, Dense, Reshape, Flatten, Dropout
+from keras.layers import Input, Dense, Reshape, Flatten, Dropout, LSTM
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
-
 import matplotlib.pyplot as plt
-
 import sys
-
+import scipy
+from scipy.io.wavfile import write, read
 import numpy as np
+import pickle
+from tqdm import tqdm
+
+
+RESOLUTION_SCALE = 10
+RUN_LEN = 10
+
 
 class GAN():
-    def __init__(self):
-        self.img_rows = 28
-        self.img_cols = 28
-        self.channels = 1
-        self.img_shape = (self.img_rows, self.img_cols, self.channels)
-        self.latent_dim = 100
+    def __init__(self, resolution_scale=20):
+        self.img_shape = (None, RUN_LEN, 129)
+        self.latent_dim = (RUN_LEN, 2)
 
         optimizer = Adam(0.0002, 0.5)
 
@@ -34,7 +37,7 @@ class GAN():
         self.generator = self.build_generator()
 
         # The generator takes noise as input and generates imgs
-        z = Input(shape=(self.latent_dim,))
+        z = Input(shape=self.latent_dim)
         img = self.generator(z)
 
         # For the combined model we will only train the generator
@@ -53,21 +56,21 @@ class GAN():
 
         model = Sequential()
 
-        model.add(Dense(256, input_dim=self.latent_dim))
+        model.add(LSTM(256, input_shape=self.latent_dim, return_sequences=True))
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(512))
+        model.add(LSTM(512, return_sequences=True))
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(1024))
+        model.add(LSTM(1024))
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(np.prod(self.img_shape), activation='tanh'))
-        model.add(Reshape(self.img_shape))
+        model.add(Dense(np.prod(self.img_shape[1:]), activation='tanh'))
+        model.add(Reshape(self.img_shape[1:]))
 
         model.summary()
 
-        noise = Input(shape=(self.latent_dim,))
+        noise = Input(shape=self.latent_dim,)
         img = model(noise)
 
         return Model(noise, img)
@@ -76,27 +79,45 @@ class GAN():
 
         model = Sequential()
 
-        model.add(Flatten(input_shape=self.img_shape))
-        model.add(Dense(512))
+        model.add(LSTM(1024, input_shape=self.img_shape[1:], return_sequences=True))
+        model.add(LSTM(512, return_sequences=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(256))
+        model.add(LSTM(256))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(1, activation='sigmoid'))
         model.summary()
 
-        img = Input(shape=self.img_shape)
+        img = Input(shape=self.img_shape[1:])
         validity = model(img)
 
         return Model(img, validity)
 
+    def load_data(self):
+        filename = f"spectrogram.npy"
+        print(f"Loading {filename}...")
+        spectrogram = np.load(filename)
+
+        print(f"spectrogram is of shape {spectrogram.shape}")
+
+        print("Chunking spectrogram...")
+        runs = np.empty((int(spectrogram.shape[0] / RUN_LEN) + 1, RUN_LEN, spectrogram.shape[1]))
+
+        featureseti = 0
+
+        for runi in tqdm(range(len(runs))):
+            run = runs[runi]
+            for samplei in range(len(run)):
+                run[samplei] = spectrogram[featureseti]
+
+        runs = np.asarray(runs)
+
+        return runs
+
     def train(self, epochs, batch_size=128, sample_interval=50):
+        X_train = self.load_data()
 
-        # Load the dataset
-        (X_train, _), (_, _) = mnist.load_data()
-
-        # Rescale -1 to 1
-        X_train = X_train / 127.5 - 1.
-        X_train = np.expand_dims(X_train, axis=3)
+        #X_train = X_train / np.linalg.norm(X_train)
+        #X_train = np.expand_dims(X_train, axis=3)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -112,10 +133,15 @@ class GAN():
             idx = np.random.randint(0, X_train.shape[0], batch_size)
             imgs = X_train[idx]
 
-            noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
+            noise = np.random.normal(0, 1, ((batch_size,) + self.latent_dim))
 
             # Generate a batch of new images
             gen_imgs = self.generator.predict(noise)
+
+            #print(imgs)
+            #print(np.asarray(gen_imgs))
+            #print(valid)
+            #print(fake)
 
             # Train the discriminator
             d_loss_real = self.discriminator.train_on_batch(imgs, valid)
@@ -126,13 +152,13 @@ class GAN():
             #  Train Generator
             # ---------------------
 
-            noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
+            noise = np.random.normal(0, 1, ((batch_size,) + self.latent_dim))
 
             # Train the generator (to have the discriminator label samples as valid)
             g_loss = self.combined.train_on_batch(noise, valid)
 
             # Plot the progress
-            print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss))
+            print("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100 * d_loss[1], g_loss))
 
             # If at save interval => save generated image samples
             if epoch % sample_interval == 0:
@@ -140,7 +166,7 @@ class GAN():
 
     def sample_images(self, epoch):
         r, c = 5, 5
-        noise = np.random.normal(0, 1, (r * c, self.latent_dim))
+        noise = np.random.normal(0, 1, ((r * c,) + self.latent_dim))
         gen_imgs = self.generator.predict(noise)
 
         # Rescale images 0 - 1
@@ -150,13 +176,30 @@ class GAN():
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
-                axs[i,j].axis('off')
+                axs[i, j].imshow(gen_imgs[cnt, :, :], cmap='gray')
+                axs[i, j].axis('off')
+
+                np.save(f"music/song_{i * c + j}-epoch_{epoch}", gen_imgs[cnt, :, :].reshape(-1))
+
                 cnt += 1
-        fig.savefig("images/%d.png" % epoch)
+        fig.savefig("music_images/%d.png" % epoch)
         plt.close()
 
 
 if __name__ == '__main__':
-    gan = GAN()
-    gan.train(epochs=50000, batch_size=128, sample_interval=1)
+    print("music_gan.py v0.1")
+
+
+    try:
+        # Disable all GPUS
+        tf.config.set_visible_devices([], 'GPU')
+        visible_devices = tf.config.get_visible_devices()
+        for device in visible_devices:
+            assert device.device_type != 'GPU'
+    except:
+        # Invalid device or cannot modify virtual devices once initialized.
+        pass
+
+
+    gan = GAN(resolution_scale=RESOLUTION_SCALE)
+    gan.train(epochs=50000, sample_interval=1)
