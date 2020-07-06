@@ -90,6 +90,14 @@ def generate_big_music(resolution_scale=RESOLUTION_SCALE):
     print(f"Saving {filename}...")
     np.save(f"{filename}", spectrogram)
 
+    filename = f"freqs.npy"
+    print(f"Saving {filename}...")
+    np.save(f"{filename}", freqs)
+
+    filename = f"times.npy"
+    print(f"Saving {filename}...")
+    np.save(f"{filename}", times)
+
 
 if __name__ == '__main__':
     print("Music Preprocessor v0.1")
